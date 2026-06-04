@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이름 추첨 프로그램</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg0: #080a0f;
+  --bg1: #0e1118;
+  --bg2: #141820;
+  --bg3: #1a2030;
+  --glass: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.08);
+  --glass-hover: rgba(255,255,255,0.07);
+  --gold: #c9a84c;
+  --gold-light: #e8cc80;
+  --gold-dim: rgba(201,168,76,0.15);
+  --gold-glow: rgba(201,168,76,0.25);
+  --text: #e8e4dc;
+  --text-secondary: #8a8880;
+  --text-dim: #4a4845;
+  --danger: #c0392b;
+  --success: #2ecc71;
+  --r: 12px;
+  --r-sm: 8px;
+  --shadow-card: 0 24px 48px rgba(0,0,0,0.6), 0 0 0 1px var(--glass-border);
+  --shadow-glow: 0 0 40px rgba(201,168,76,0.12);
+  --mono: 'DM Mono', monospace;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'Noto Sans KR', sans-serif;
+}
+body.light {
+  --bg0: #f4f1eb;
+  --bg1: #f9f7f2;
+  --bg2: #ffffff;
+  --bg3: #f0ede6;
+  --glass: rgba(0,0,0,0.02);
+  --glass-border: rgba(0,0,0,0.08);
+  --glass-hover: rgba(0,0,0,0.04);
+  --gold: #a07828;
+  --gold-light: #c09040;
+  --gold-dim: rgba(160,120,40,0.1);
+  --gold-glow: rgba(160,120,40,0.2);
+  --text: #1a1714;
+  --text-secondary: #706860;
+  --text-dim: #b0a898;
+  --shadow-card: 0 8px 32px rgba(0,0,0,0.08), 0 0 0 1px var(--glass-border);
+  --shadow-glow: 0 0 30px rgba(160,120,40,0.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg0);color:var(--text);min-height:100vh;transition:background .5s,color .5s;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9998;opacity:.6;}
+body::after{content:'';position:fixed;top:-20%;left:50%;transform:translateX(-50%);width:700px;height:350px;background:radial-gradient(ellipse,rgba(201,168,76,.06) 0%,transparent 70%);pointer-events:none;z-index:0;}
+body.light::after{background:radial-gradient(ellipse,rgba(160,120,40,.04) 0%,transparent 70%);}
+.wrapper{position:relative;z-index:1;max-width:1340px;margin:0 auto;padding:28px 20px 60px;}
+
+/* HEADER */
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:36px;padding-bottom:24px;border-bottom:1px solid var(--glass-border);position:relative;}
+header::after{content:'';position:absolute;bottom:-1px;left:0;width:120px;height:1px;background:linear-gradient(90deg,var(--gold),transparent);}
+.h-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;}
+.h-title{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:300;letter-spacing:.04em;line-height:1;}
+.h-title em{font-style:italic;color:var(--gold);}
+.h-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+
+/* FORM ELEMENTS */
+select,input[type=text],input[type=number],textarea{font-family:var(--sans);font-size:13px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-sm);color:var(--text);padding:9px 14px;outline:none;width:100%;transition:border-color .25s,background .25s,box-shadow .25s;-webkit-appearance:none;appearance:none;}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M5 6L0 0h10z' fill='%238a8880'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px;cursor:pointer;}
+select option{background:#1a2030;color:#e8e4dc;}
+body.light select option{background:#fff;color:#1a1714;}
+select:focus,input:focus,textarea:focus{border-color:var(--gold);background:var(--glass-hover);box-shadow:0 0 0 3px var(--gold-dim);}
+textarea{resize:vertical;min-height:180px;line-height:1.7;}
+
+/* BUTTONS */
+button{font-family:var(--sans);font-size:12px;font-weight:500;letter-spacing:.05em;border:none;border-radius:var(--r-sm);cursor:pointer;padding:9px 16px;transition:all .2s;position:relative;overflow:hidden;white-space:nowrap;}
+button::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.07);opacity:0;transition:opacity .2s;}
+button:hover::after{opacity:1;}
+button:active{transform:scale(.975);}
+.btn-gold{background:linear-gradient(135deg,var(--gold) 0%,var(--gold-light) 60%,var(--gold) 100%);color:#080a0f;font-weight:700;box-shadow:0 4px 16px rgba(201,168,76,.3);}
+.btn-gold:hover{box-shadow:0 6px 24px rgba(201,168,76,.45);transform:translateY(-1px);}
+.btn-ghost{background:var(--glass);border:1px solid var(--glass-border);color:var(--text-secondary);}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+.btn-danger{background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.25);color:#e74c3c;}
+.btn-danger:hover{background:rgba(192,57,43,.2);}
+.btn-success{background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.2);color:#2ecc71;}
+.btn-success:hover{background:rgba(46,204,113,.18);}
+.btn-icon{background:var(--glass);border:1px solid var(--glass-border);color:var(--text-secondary);padding:9px 11px;font-size:15px;line-height:1;}
+.btn-icon:hover{border-color:var(--gold);color:var(--gold);}
+.btn-main-draw{width:100%;padding:18px;font-size:15px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;border-radius:var(--r);background:linear-gradient(135deg,#c9a84c 0%,#e8cc80 50%,#c9a84c 100%);background-size:200% 100%;color:#080a0f;box-shadow:0 8px 32px rgba(201,168,76,.35),inset 0 1px 0 rgba(255,255,255,.3);animation:shimmer 3s ease infinite;margin-bottom:14px;}
+.btn-main-draw:hover{box-shadow:0 12px 40px rgba(201,168,76,.5),inset 0 1px 0 rgba(255,255,255,.3);transform:translateY(-2px);}
+.btn-main-draw:disabled{opacity:.5;cursor:not-allowed;transform:none;animation:none;}
+@keyframes shimmer{0%{background-position:0 50%;}50%{background-position:100% 50%;}100%{background-position:0 50%;}}
+
+/* CARD */
+.card{background:var(--bg1);border:1px solid var(--glass-border);border-radius:var(--r);padding:22px;box-shadow:var(--shadow-card);position:relative;transition:background .4s,border-color .3s;animation:cardIn .5s ease backwards;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold-dim),transparent);border-radius:var(--r) var(--r) 0 0;}
+.card-label{font-family:var(--mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.card-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--gold-dim),transparent);}
+@keyframes cardIn{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+
+/* LAYOUT */
+.grid-main{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:16px;margin-bottom:16px;}
+.grid-bonus{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.grid-main .card:nth-child(1){animation-delay:.1s;}
+.grid-main .card:nth-child(2){animation-delay:.2s;}
+.grid-main .card:nth-child(3){animation-delay:.3s;}
+.grid-bonus .card:nth-child(1){animation-delay:.35s;}
+.grid-bonus .card:nth-child(2){animation-delay:.42s;}
+.grid-bonus .card:nth-child(3){animation-delay:.49s;}
+
+/* RESULT */
+.result-box{background:var(--bg0);border:1px solid var(--glass-border);border-radius:var(--r);min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px 16px;margin:16px 0 12px;position:relative;overflow:hidden;transition:border-color .4s,box-shadow .4s;}
+body.light .result-box{background:var(--bg3);}
+.result-box.active{border-color:var(--gold);box-shadow:var(--shadow-glow),inset 0 0 60px rgba(201,168,76,.04);}
+.result-box::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(201,168,76,.06),transparent);pointer-events:none;}
+body.light .result-box::before{background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(160,120,40,.04),transparent);}
+.res-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;transition:color .3s;}
+.result-box.active .res-eyebrow{color:var(--gold);}
+.res-text{font-family:var(--serif);font-size:clamp(1.3rem,3.5vw,2rem);font-weight:300;color:var(--text-secondary);letter-spacing:.03em;line-height:1.3;word-break:keep-all;}
+.res-text.rolling{font-family:var(--mono);font-size:clamp(1rem,2.5vw,1.5rem);color:var(--gold);animation:glitch .08s ease infinite;}
+.res-text.winner{font-family:var(--serif);font-style:italic;font-size:clamp(1.4rem,3.5vw,2.1rem);background:linear-gradient(135deg,var(--gold),var(--gold-light),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:revealWinner .6s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes glitch{0%{opacity:.8;transform:translateX(-1px);}50%{opacity:1;transform:translateX(1px);}100%{opacity:.8;transform:translateX(0);}}
+@keyframes revealWinner{from{opacity:0;transform:scale(.85) translateY(6px);}to{opacity:1;transform:scale(1) translateY(0);}}
+
+/* STATUS */
+.status-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px;}
+.stat-pill{font-family:var(--mono);font-size:10px;color:var(--text-secondary);background:var(--bg0);border:1px solid var(--glass-border);border-radius:999px;padding:4px 12px;letter-spacing:.05em;}
+body.light .stat-pill{background:var(--bg3);}
+.stat-pill strong{color:var(--gold);}
+
+/* BUTTONS LAYOUT */
+.btn-row{display:flex;gap:8px;margin-bottom:8px;}
+.btn-row button{flex:1;}
+.btn-col{display:flex;flex-direction:column;gap:8px;}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--glass-border),transparent);margin:12px 0;}
+
+/* LISTS */
+.list-section{margin-top:14px;}
+.list-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.list-head-label{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-secondary);}
+.list-head-count{font-family:var(--mono);font-size:10px;color:var(--gold);margin-left:auto;background:var(--gold-dim);padding:2px 8px;border-radius:999px;}
+.name-scroll{max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--glass-border) transparent;}
+.name-scroll::-webkit-scrollbar{width:3px;}
+.name-scroll::-webkit-scrollbar-thumb{background:var(--glass-border);border-radius:3px;}
+.name-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:var(--r-sm);margin-bottom:4px;border:1px solid transparent;transition:background .2s,border-color .2s;font-size:13px;}
+.name-row:hover{background:var(--glass-hover);border-color:var(--glass-border);}
+.name-row.cand{border-left:2px solid rgba(201,168,76,.3);}
+.name-row.win-row{border-left:2px solid rgba(46,204,113,.4);background:rgba(46,204,113,.04);color:#7dcea0;}
+.name-row.win-row:hover{background:rgba(46,204,113,.08);}
+.name-row.fresh{animation:freshIn .5s ease forwards;}
+@keyframes freshIn{from{background:rgba(201,168,76,.15);}to{background:transparent;}}
+.name-row-btns{display:flex;gap:4px;flex-shrink:0;}
+.btn-n{font-size:10px;padding:3px 8px;border-radius:4px;letter-spacing:.03em;margin:0;}
+.btn-n.gold{background:var(--gold-dim);border:1px solid rgba(201,168,76,.25);color:var(--gold);}
+.btn-n.gold:hover{background:rgba(201,168,76,.25);}
+.btn-n.green{background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.2);color:#2ecc71;}
+.btn-n.green:hover{background:rgba(46,204,113,.18);}
+.btn-n.red{background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.15);color:#c0392b;}
+.btn-n.red:hover{background:rgba(192,57,43,.15);}
+.empty-state{text-align:center;padding:18px 10px;color:var(--text-dim);font-family:var(--mono);font-size:10px;letter-spacing:.1em;}
+
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:14px;}
+.search-wrap input{padding-left:34px;font-size:12px;}
+.search-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:13px;pointer-events:none;}
+
+/* DRAW CONFIG */
+.draw-cfg{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.draw-cfg-lbl{font-family:var(--mono);font-size:10px;color:var(--text-secondary);letter-spacing:.1em;white-space:nowrap;}
+.draw-cfg select{flex:1;font-size:12px;}
+.draw-cfg input[type=number]{width:70px;flex-shrink:0;font-size:12px;display:none;}
+
+/* BONUS LABEL */
+.bonus-tag{font-family:var(--mono);font-size:8px;color:var(--text-dim);letter-spacing:.15em;margin-left:auto;}
+
+/* TIMER */
+.timer-face{font-family:var(--mono);font-size:3rem;font-weight:300;color:var(--gold);text-align:center;letter-spacing:.08em;padding:12px 0 6px;line-height:1;transition:color .3s;}
+.timer-face.urgent{color:#e74c3c;animation:tPulse .5s ease infinite;}
+.timer-face.paused{color:var(--text-secondary);}
+@keyframes tPulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.t-slider{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:var(--glass-border);border-radius:2px;outline:none;margin:8px 0;border:none;padding:0;}
+.t-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 8px var(--gold-glow);}
+.t-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--gold);cursor:pointer;border:none;}
+.t-set-lbl{font-family:var(--mono);font-size:10px;color:var(--text-secondary);text-align:center;letter-spacing:.05em;margin-bottom:6px;}
+
+/* HISTORY */
+.hist-scroll{max-height:180px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--glass-border) transparent;}
+.hist-scroll::-webkit-scrollbar{width:3px;}
+.hist-scroll::-webkit-scrollbar-thumb{background:var(--glass-border);border-radius:3px;}
+.hist-entry{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:6px 10px;border-radius:6px;margin-bottom:4px;font-size:12px;border:1px solid transparent;transition:background .15s;}
+.hist-entry:hover{background:var(--glass);border-color:var(--glass-border);}
+.hist-round{font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:.1em;white-space:nowrap;flex-shrink:0;}
+.hist-names{color:var(--text-secondary);font-size:12px;text-align:right;}
+
+/* STATS */
+.chart-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.chart-name{font-size:11px;color:var(--text-secondary);width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;}
+.chart-track{flex:1;height:4px;background:var(--glass-border);border-radius:2px;overflow:hidden;}
+.chart-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:2px;transition:width .8s cubic-bezier(.4,0,.2,1);}
+.chart-rank{font-family:var(--mono);font-size:9px;color:var(--text-dim);width:22px;text-align:right;flex-shrink:0;}
+
+/* AUTHOR */
+.author-block{margin-top:14px;padding-top:12px;border-top:1px solid var(--glass-border);}
+.author-sub{font-family:var(--mono);font-size:9px;color:var(--text-dim);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;}
+.author-inputs{display:grid;grid-template-columns:1.5fr 1.5fr 1fr;gap:6px;margin-bottom:8px;}
+.author-inputs input{font-size:11px;padding:7px 10px;}
+.author-disp{font-family:var(--serif);font-size:1rem;font-style:italic;color:var(--gold);text-align:center;letter-spacing:.02em;min-height:22px;}
+
+/* CONFETTI */
+#confettiLayer{position:fixed;inset:0;pointer-events:none;z-index:9999;}
+.cp{position:absolute;border-radius:2px;animation:cpFall linear forwards;}
+@keyframes cpFall{0%{transform:translateY(0) rotate(0deg);opacity:1;}100%{transform:translateY(110vh) rotate(600deg);opacity:0;}}
+
+/* FOOTER */
+footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--glass-border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;position:relative;}
+footer::before{content:'';position:absolute;top:-1px;left:0;width:80px;height:1px;background:linear-gradient(90deg,var(--gold),transparent);}
+.footer-left{font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:.1em;}
+.footer-author{font-family:var(--serif);font-size:1rem;font-style:italic;color:var(--text-secondary);}
+.footer-author strong{color:var(--gold);}
+
+/* RESPONSIVE */
+@media(max-width:1000px){.grid-main{grid-template-columns:1fr 1fr;}.grid-bonus{grid-template-columns:1fr 1fr;}}
+@media(max-width:680px){.grid-main{grid-template-columns:1fr;}.grid-bonus{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div id="confettiLayer"></div>
+<div class="wrapper">
+
+<!-- HEADER -->
+<header>
+  <div>
+    <div class="h-eyebrow" id="h_eyebrow">HTML / CSS / JavaScript · Web Application</div>
+    <h1 class="h-title" id="h_title">이름 <em>추첨</em> 프로그램</h1>
+  </div>
+  <div class="h-controls">
+    <select id="langSel" style="width:136px;font-size:12px">
+      <option value="ko">🇰🇷 한국어</option>
+      <option value="en">🇺🇸 English</option>
+      <option value="zh">🇨🇳 中文</option>
+      <option value="ja">🇯🇵 日本語</option>
+    </select>
+    <button class="btn-icon" id="themeBtn" title="Theme">🌙</button>
+  </div>
+</header>
+
+<!-- MAIN GRID -->
+<div class="grid-main">
+
+  <!-- ① INPUT -->
+  <div class="card">
+    <div class="card-label" id="c1_lbl">01 — 명단 입력</div>
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.6" id="c1_desc">한 줄에 한 명씩 입력하거나 Excel 워크시트에서 복사해 붙여넣으세요.</p>
+    <textarea id="nameInput" placeholder="김지영&#10;홍길동&#10;이순신&#10;..."></textarea>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn-gold" onclick="loadNames()" id="btn_load">명단 불러오기</button>
+      <button class="btn-ghost" onclick="sampleFill()" style="padding:9px 12px;flex:0" title="샘플">✦</button>
+    </div>
+    <p style="font-size:10px;color:var(--text-dim);margin-top:8px;font-family:var(--mono);letter-spacing:.05em" id="c1_note">※ 중복 항목 자동 제거</p>
+  </div>
+
+  <!-- ② DRAW -->
+  <div class="card">
+    <div class="card-label" id="c2_lbl">02 — 추첨</div>
+    <div class="draw-cfg">
+      <span class="draw-cfg-lbl" id="c2_cnt_lbl">추첨 인원</span>
+      <select id="drawCountSel">
+        <option value="1">1명</option>
+        <option value="2">2명</option>
+        <option value="3">3명</option>
+        <option value="4">4명</option>
+        <option value="5">5명</option>
+        <option value="custom">직접 입력</option>
+      </select>
+      <input type="number" id="customCnt" min="1" placeholder="N" value="1">
+    </div>
+    <button class="btn-main-draw" id="mainDrawBtn" onclick="doDraw(false)"><span id="btn_draw">추 첨 하 기</span></button>
+    <div class="result-box" id="resultBox">
+      <div class="res-eyebrow" id="res_ey">RESULT</div>
+      <div class="res-text" id="resText">결과가 여기에 표시됩니다</div>
+    </div>
+    <div class="status-row" id="statusRow">
+      <div class="stat-pill">대상 <strong id="stC">0</strong></div>
+      <div class="stat-pill">당첨 <strong id="stW">0</strong></div>
+      <div class="stat-pill">전체 <strong id="stT">0</strong></div>
+    </div>
+    <div class="divider"></div>
+    <div class="btn-col">
+      <div class="btn-row">
+        <button class="btn-ghost" onclick="doDraw(true)" id="btn_redraw">↺ 재추첨</button>
+        <button class="btn-ghost" onclick="undoLast()" id="btn_undo">↩ 최근 취소</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn-ghost" onclick="resetOrig()" id="btn_orig">♻ 원래대로</button>
+        <button class="btn-danger" onclick="resetEmpty()" id="btn_empty">✕ 전체 초기화</button>
+      </div>
+      <button class="btn-success" onclick="exportWin()" id="btn_export">↗ 당첨자 복사</button>
+    </div>
+  </div>
+
+  <!-- ③ LIST -->
+  <div class="card">
+    <div class="card-label" id="c3_lbl">03 — 목록 관리</div>
+    <div class="search-wrap">
+      <span class="search-ico">⌕</span>
+      <input type="text" id="searchInput" placeholder="이름 검색…" oninput="renderLists()">
+    </div>
+    <div class="list-section">
+      <div class="list-head">
+        <span class="list-head-label" id="lbl_cand">추첨 대상</span>
+        <span class="list-head-count" id="cntC">0</span>
+      </div>
+      <div class="name-scroll" id="candList"></div>
+    </div>
+    <div class="list-section" style="margin-top:16px">
+      <div class="list-head">
+        <span class="list-head-label" id="lbl_win">당첨자</span>
+        <span class="list-head-count" id="cntW">0</span>
+      </div>
+      <div class="name-scroll" id="winList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BONUS GRID -->
+<div class="grid-bonus">
+
+  <!-- BONUS ① TIMER -->
+  <div class="card">
+    <div class="card-label"><span id="b1_lbl">추첨 타이머</span><span class="bonus-tag" id="b1_tag">추가 기능 ①</span></div>
+    <div class="timer-face" id="timerFace">01:00</div>
+    <div class="t-set-lbl"><span id="tVal">60</span><span id="b1_sec">초 설정</span></div>
+    <input class="t-slider" type="range" id="tRange" min="10" max="300" value="60" oninput="onTRange()">
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn-gold" onclick="tStart()" id="tStartBtn" style="font-size:11px">▶ 시작</button>
+      <button class="btn-ghost" onclick="tPause()" id="tPauseBtn" style="font-size:11px">⏸ 일시정지</button>
+      <button class="btn-ghost" onclick="tReset()" id="tResetBtn" style="font-size:11px">⏹ 초기화</button>
+    </div>
+    <p style="font-size:10px;color:var(--text-dim);margin-top:8px;font-family:var(--mono);letter-spacing:.04em;line-height:1.6" id="b1_hint">타이머 종료 시 자동으로 추첨을 실행합니다.</p>
+  </div>
+
+  <!-- BONUS ② HISTORY -->
+  <div class="card">
+    <div class="card-label"><span id="b2_lbl">추첨 히스토리</span><span class="bonus-tag" id="b2_tag">추가 기능 ②</span></div>
+    <div class="hist-scroll" id="histArea"><div class="empty-state" id="b2_empty">추첨 기록이 없습니다</div></div>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn-ghost" onclick="clearHist()" id="b2_clear" style="font-size:11px">기록 삭제</button>
+      <button class="btn-ghost" onclick="exportHist()" id="b2_exp" style="font-size:11px">내보내기</button>
+    </div>
+  </div>
+
+  <!-- BONUS ③ STATS + AUTHOR -->
+  <div class="card">
+    <div class="card-label"><span id="b3_lbl">통계 & 작성자</span><span class="bonus-tag" id="b3_tag">추가 기능 ③</span></div>
+    <div id="statsChart"><div class="empty-state" id="b3_empty">추첨 후 통계가 표시됩니다</div></div>
+    <div class="author-block">
+      <div class="author-sub" id="b3_auth_lbl">작성자 정보</div>
+      <div class="author-inputs">
+        <input type="text" id="aName" placeholder="이름" oninput="updateAuthor()">
+        <input type="text" id="aDept" placeholder="학과" oninput="updateAuthor()">
+        <input type="text" id="aYear" placeholder="00" oninput="updateAuthor()">
+      </div>
+      <div class="author-disp" id="authorDisp">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left" id="footL">이름 추첨 프로그램 · HTML/CSS/JavaScript</div>
+  <div class="footer-author" id="footA">—</div>
+</footer>
+</div>
+
+<script>
+/* ─── STATE ─── */
+let origNames=[],candNames=[],winNames=[],hist=[],round=0,isDrawing=false,drawTmr=null;
+let tSec=60,tLeft=60,tRunning=false,tPaused=false,tItv=null;
+
+/* ─── TRANSLATIONS ─── */
+const LANG={
+  ko:{
+    eyebrow:'HTML / CSS / JavaScript · Web Application',
+    title:'이름 <em>추첨</em> 프로그램',
+    c1_lbl:'01 — 명단 입력',c1_desc:'한 줄에 한 명씩 입력하거나 Excel 워크시트에서 복사해 붙여넣으세요.',
+    btn_load:'명단 불러오기',c1_note:'※ 중복 항목 자동 제거',
+    c2_lbl:'02 — 추첨',c2_cnt_lbl:'추첨 인원',btn_draw:'추 첨 하 기',
+    btn_redraw:'↺ 재추첨',btn_undo:'↩ 최근 취소',btn_orig:'♻ 원래대로',btn_empty:'✕ 전체 초기화',btn_export:'↗ 당첨자 복사',
+    c3_lbl:'03 — 목록 관리',lbl_cand:'추첨 대상',lbl_win:'당첨자',
+    res_ey:'RESULT',res_def:'결과가 여기에 표시됩니다',
+    sp_cand:'대상',sp_win:'당첨',sp_total:'전체',
+    b1_lbl:'추첨 타이머',b1_tag:'추가 기능 ①',b1_sec:'초 설정',b1_hint:'타이머 종료 시 자동으로 추첨을 실행합니다.',
+    tStart:'▶ 시작',tPause:'⏸ 일시정지',tReset:'⏹ 초기화',
+    b2_lbl:'추첨 히스토리',b2_tag:'추가 기능 ②',b2_empty:'추첨 기록이 없습니다',b2_clear:'기록 삭제',b2_exp:'내보내기',
+    b3_lbl:'통계 & 작성자',b3_tag:'추가 기능 ③',b3_empty:'추첨 후 통계가 표시됩니다',b3_auth_lbl:'작성자 정보',
+    footL:'이름 추첨 프로그램 · HTML/CSS/JavaScript',
+    searchPH:'이름 검색…',namePH:'김지영\n홍길동\n이순신\n...',
+    aName:'이름',aDept:'학과',aYear:'입학년도',
+    mv:'되돌리기',rm:'제거',
+    msg_loaded:n=>`${n}명의 명단이 불러와졌습니다.`,
+    msg_noCand:'추첨 대상이 없습니다.',msg_tooMany:'추첨 인원이 대상자 수보다 많습니다.',
+    msg_win:w=>`🏆  ${w}`,msg_redo:w=>`↺  ${w}`,
+    msg_origReset:'원래 명단으로 초기화되었습니다.',msg_emptyReset:'명단이 초기화되었습니다.',
+    msg_undo:n=>`${n} · 취소됨`,msg_noUndo:'취소할 당첨자가 없습니다.',
+    msg_copied:'당첨자 목록이 복사되었습니다.',msg_noWin:'복사할 당첨자가 없습니다.',
+    msg_tEnd:'⏱ 시간 종료! 자동 추첨을 실행합니다.',
+    rl:'R',confirm:'정말 전체 초기화할까요?',
+    samples:['김지영','홍길동','이순신','박서연','최민준','정하은','강도현','윤서아','임준혁','한지민'],
+  },
+  en:{
+    eyebrow:'HTML / CSS / JavaScript · Web Application',
+    title:'Name <em>Lottery</em>',
+    c1_lbl:'01 — Input List',c1_desc:'Enter one name per line, or paste directly from Excel.',
+    btn_load:'Load List',c1_note:'※ Duplicates removed automatically',
+    c2_lbl:'02 — Draw',c2_cnt_lbl:'Draw count',btn_draw:'D R A W',
+    btn_redraw:'↺ Redraw',btn_undo:'↩ Undo Last',btn_orig:'♻ Reset',btn_empty:'✕ Clear All',btn_export:'↗ Copy Winners',
+    c3_lbl:'03 — List Manager',lbl_cand:'Candidates',lbl_win:'Winners',
+    res_ey:'RESULT',res_def:'Result appears here',
+    sp_cand:'Candidates',sp_win:'Winners',sp_total:'Total',
+    b1_lbl:'Draw Timer',b1_tag:'Extra Feature ①',b1_sec:' sec',b1_hint:'Auto-draws when the timer reaches zero.',
+    tStart:'▶ Start',tPause:'⏸ Pause',tReset:'⏹ Reset',
+    b2_lbl:'Draw History',b2_tag:'Extra Feature ②',b2_empty:'No draw records yet',b2_clear:'Clear',b2_exp:'Export',
+    b3_lbl:'Stats & Author',b3_tag:'Extra Feature ③',b3_empty:'Stats appear after drawing',b3_auth_lbl:'Author Info',
+    footL:'Name Lottery · HTML/CSS/JavaScript',
+    searchPH:'Search name…',namePH:'Alice\nBob\nCharlie\n...',
+    aName:'Name',aDept:'Major',aYear:'Year',
+    mv:'Restore',rm:'Remove',
+    msg_loaded:n=>`${n} names loaded.`,
+    msg_noCand:'No candidates available.',msg_tooMany:'Draw count exceeds candidates.',
+    msg_win:w=>`🏆  ${w}`,msg_redo:w=>`↺  ${w}`,
+    msg_origReset:'Reset to original list.',msg_emptyReset:'List cleared.',
+    msg_undo:n=>`${n} · undone`,msg_noUndo:'No winner to undo.',
+    msg_copied:'Winner list copied.',msg_noWin:'No winners to copy.',
+    msg_tEnd:"⏱ Time's up! Auto-drawing…",
+    rl:'R',confirm:'Clear all names?',
+    samples:['Alice','Bob','Charlie','Diana','Eve','Frank','Grace','Henry','Iris','James'],
+  },
+  zh:{
+    eyebrow:'HTML / CSS / JavaScript · Web 应用',
+    title:'姓名 <em>抽签</em> 程序',
+    c1_lbl:'01 — 输入名单',c1_desc:'每行输入一个姓名，或从 Excel 中复制粘贴。',
+    btn_load:'导入名单',c1_note:'※ 重复姓名自动删除',
+    c2_lbl:'02 — 抽签',c2_cnt_lbl:'抽取人数',btn_draw:'开 始 抽 签',
+    btn_redraw:'↺ 重新抽签',btn_undo:'↩ 撤销',btn_orig:'♻ 恢复原始',btn_empty:'✕ 清空',btn_export:'↗ 复制中奖者',
+    c3_lbl:'03 — 名单管理',lbl_cand:'候选名单',lbl_win:'中奖名单',
+    res_ey:'结果',res_def:'结果显示在这里',
+    sp_cand:'候选',sp_win:'中奖',sp_total:'合计',
+    b1_lbl:'抽签计时器',b1_tag:'附加功能 ①',b1_sec:'秒',b1_hint:'计时结束后自动开始抽签。',
+    tStart:'▶ 开始',tPause:'⏸ 暂停',tReset:'⏹ 重置',
+    b2_lbl:'抽签记录',b2_tag:'附加功能 ②',b2_empty:'暂无抽签记录',b2_clear:'清除记录',b2_exp:'导出',
+    b3_lbl:'统计 & 作者',b3_tag:'附加功能 ③',b3_empty:'抽签后显示统计',b3_auth_lbl:'作者信息',
+    footL:'姓名抽签程序 · HTML/CSS/JavaScript',
+    searchPH:'搜索姓名…',namePH:'张伟\n王芳\n李娜\n...',
+    aName:'姓名',aDept:'专业',aYear:'入学年份',
+    mv:'放回',rm:'移除',
+    msg_loaded:n=>`已导入 ${n} 人。`,
+    msg_noCand:'没有可抽取的候选人。',msg_tooMany:'抽取人数超过候选人数。',
+    msg_win:w=>`🏆  ${w}`,msg_redo:w=>`↺  ${w}`,
+    msg_origReset:'已恢复为原始名单。',msg_emptyReset:'名单已清空。',
+    msg_undo:n=>`${n} · 已撤销`,msg_noUndo:'没有可撤销的中奖者。',
+    msg_copied:'中奖者名单已复制。',msg_noWin:'没有中奖者可复制。',
+    msg_tEnd:'⏱ 时间到！自动抽签中…',
+    rl:'R',confirm:'确定清空所有名单？',
+    samples:['张伟','王芳','李娜','刘阳','陈静','赵磊','孙雪','周浩','吴琳','徐明'],
+  },
+  ja:{
+    eyebrow:'HTML / CSS / JavaScript · Web アプリ',
+    title:'名前 <em>抽選</em> プログラム',
+    c1_lbl:'01 — 名簿入力',c1_desc:'1行に1人ずつ入力するか、Excel からコピー&ペーストしてください。',
+    btn_load:'名簿を読み込む',c1_note:'※ 重複した名前は自動削除されます',
+    c2_lbl:'02 — 抽選',c2_cnt_lbl:'抽選人数',btn_draw:'抽 選 す る',
+    btn_redraw:'↺ 再抽選',btn_undo:'↩ 直前を取消',btn_orig:'♻ 元に戻す',btn_empty:'✕ 全てクリア',btn_export:'↗ 当選者をコピー',
+    c3_lbl:'03 — リスト管理',lbl_cand:'抽選対象',lbl_win:'当選者',
+    res_ey:'抽選結果',res_def:'ここに結果が表示されます',
+    sp_cand:'対象',sp_win:'当選',sp_total:'合計',
+    b1_lbl:'抽選タイマー',b1_tag:'追加機能 ①',b1_sec:'秒',b1_hint:'タイマー終了後、自動的に抽選を実行します。',
+    tStart:'▶ 開始',tPause:'⏸ 一時停止',tReset:'⏹ リセット',
+    b2_lbl:'抽選履歴',b2_tag:'追加機能 ②',b2_empty:'抽選履歴はありません',b2_clear:'履歴をクリア',b2_exp:'出力',
+    b3_lbl:'統計 & 作成者',b3_tag:'追加機能 ③',b3_empty:'抽選後に統計が表示されます',b3_auth_lbl:'作成者情報',
+    footL:'名前抽選プログラム · HTML/CSS/JavaScript',
+    searchPH:'名前を検索…',namePH:'田中太郎\n山田花子\n佐藤健\n...',
+    aName:'名前',aDept:'学科',aYear:'入学年度',
+    mv:'戻す',rm:'削除',
+    msg_loaded:n=>`${n} 人の名簿を読み込みました。`,
+    msg_noCand:'抽選対象がいません。',msg_tooMany:'抽選人数が対象人数を超えています。',
+    msg_win:w=>`🏆  ${w}`,msg_redo:w=>`↺  ${w}`,
+    msg_origReset:'初期名簿に戻しました。',msg_emptyReset:'名簿を空にしました。',
+    msg_undo:n=>`${n} · 取り消しました`,msg_noUndo:'取り消す当選者がいません。',
+    msg_copied:'当選者リストをコピーしました。',msg_noWin:'コピーする当選者がいません。',
+    msg_tEnd:'⏱ 時間切れ！自動抽選します。',
+    rl:'R',confirm:'全ての名簿をクリアしますか？',
+    samples:['田中太郎','山田花子','佐藤健','鈴木美咲','高橋翔','伊藤愛','渡辺誠','中村優','小林晴子','加藤大輔'],
+  }
+};
+let curLang='ko';
+const L=k=>LANG[curLang][k];
+
+/* ─── LANG APPLY ─── */
+function applyLang(lang){
+  curLang=lang;
+  const D=LANG[lang];
+  const $=id=>document.getElementById(id);
+  const tx=(id,v)=>{const e=$(id);if(e)e.textContent=v;};
+  const txH=(id,v)=>{const e=$(id);if(e)e.innerHTML=v;};
+  const at=(id,a,v)=>{const e=$(id);if(e)e.setAttribute(a,v);};
+
+  tx('h_eyebrow',D.eyebrow);
+  txH('h_title',D.title);
+  tx('c1_lbl',D.c1_lbl);tx('c1_desc',D.c1_desc);tx('btn_load',D.btn_load);tx('c1_note',D.c1_note);
+  tx('c2_lbl',D.c2_lbl);tx('c2_cnt_lbl',D.c2_cnt_lbl);tx('btn_draw',D.btn_draw);
+  tx('btn_redraw',D.btn_redraw);tx('btn_undo',D.btn_undo);tx('btn_orig',D.btn_orig);tx('btn_empty',D.btn_empty);tx('btn_export',D.btn_export);
+  tx('c3_lbl',D.c3_lbl);tx('lbl_cand',D.lbl_cand);tx('lbl_win',D.lbl_win);
+  tx('res_ey',D.res_ey);
+  // only reset result text if it's still a default
+  const rt=$('resText');
+  const defs=Object.values(LANG).map(l=>l.res_def);
+  if(!rt.dataset.locked||defs.includes(rt.textContent.trim())){rt.textContent=D.res_def;rt.className='res-text';}
+  tx('b1_lbl',D.b1_lbl);tx('b1_tag',D.b1_tag);tx('b1_sec',D.b1_sec);tx('b1_hint',D.b1_hint);
+  tx('tStartBtn',D.tStart);tx('tPauseBtn',D.tPause);tx('tResetBtn',D.tReset);
+  tx('b2_lbl',D.b2_lbl);tx('b2_tag',D.b2_tag);tx('b2_clear',D.b2_clear);tx('b2_exp',D.b2_exp);
+  tx('b3_lbl',D.b3_lbl);tx('b3_tag',D.b3_tag);tx('b3_auth_lbl',D.b3_auth_lbl);
+  tx('footL',D.footL);
+  at('searchInput','placeholder',D.searchPH);
+  at('nameInput','placeholder',D.namePH);
+  at('aName','placeholder',D.aName);
+  at('aDept','placeholder',D.aDept);
+  at('aYear','placeholder',D.aYear);
+  updateStatus();renderLists();renderHist();renderStats();updateAuthor();
+  if(!hist.length){const e=$('b2_empty');if(e)e.textContent=D.b2_empty;}
+  if(!winNames.length){const e=$('b3_empty');if(e)e.textContent=D.b3_empty;}
+}
+
+/* ─── UTILS ─── */
+function parseNames(txt){return[...new Set(txt.split(/[\n\r\t,]+/).map(s=>s.trim()).filter(s=>s.length>0))];}
+function pickRandom(arr,n){const p=[...arr],r=[];for(let i=0;i<n&&p.length>0;i++){const x=Math.floor(Math.random()*p.length);r.push(p.splice(x,1)[0]);}return r;}
+function esc(n){return n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+
+/* ─── LOAD ─── */
+function loadNames(){
+  const names=parseNames(document.getElementById('nameInput').value);
+  if(!names.length)return;
+  origNames=[...names];candNames=[...names];winNames=[];hist=[];round=0;
+  setResult(L('msg_loaded')(names.length),'default');
+  updateStatus();renderLists();renderHist();renderStats();
+}
+function sampleFill(){
+  document.getElementById('nameInput').value=L('samples').join('\n');
+  loadNames();
+}
+
+/* ─── DRAW ─── */
+function getN(){
+  const s=document.getElementById('drawCountSel').value;
+  if(s==='custom')return Math.max(1,parseInt(document.getElementById('customCnt').value)||1);
+  return parseInt(s);
+}
+function doDraw(isRedo){
+  if(isDrawing)return;
+  if(!candNames.length){alert(L('msg_noCand'));return;}
+  const n=getN();
+  if(n>candNames.length){alert(L('msg_tooMany'));return;}
+  isDrawing=true;
+  document.getElementById('mainDrawBtn').disabled=true;
+  document.getElementById('resultBox').classList.add('active');
+  const rt=document.getElementById('resText');
+  rt.className='res-text rolling';rt.dataset.locked='';
+  let tick=0,max=20;
+  clearInterval(drawTmr);
+  drawTmr=setInterval(()=>{
+    rt.textContent=pickRandom(candNames,Math.min(n,candNames.length)).join('   ·   ');
+    tick++;
+    if(tick>=max){clearInterval(drawTmr);finalDraw(n,isRedo);}
+  },90);
+}
+function finalDraw(n,isRedo){
+  const winners=pickRandom(candNames,n);
+  winners.forEach(w=>{candNames=candNames.filter(x=>x!==w);winNames.push(w);});
+  round++;
+  hist.push({round,winners:[...winners],isRedo});
+  const rt=document.getElementById('resText');
+  rt.className='res-text winner';
+  rt.textContent=(isRedo?L('msg_redo'):L('msg_win'))(winners.join('  ·  '));
+  rt.dataset.locked='1';
+  spawnConfetti();
+  updateStatus();renderLists(winners);renderHist();renderStats();
+  isDrawing=false;
+  document.getElementById('mainDrawBtn').disabled=false;
+}
+
+/* ─── SET RESULT ─── */
+function setResult(txt,mode='default'){
+  const rt=document.getElementById('resText'),rb=document.getElementById('resultBox');
+  rt.textContent=txt;rt.className='res-text'+(mode==='winner'?' winner':'');
+  rt.dataset.locked=mode==='winner'?'1':'';
+  rb.classList.toggle('active',mode==='winner');
+}
+
+/* ─── RESET ─── */
+function resetOrig(){
+  if(!origNames.length)return;
+  candNames=[...origNames];winNames=[];hist=[];round=0;
+  setResult(L('msg_origReset'));updateStatus();renderLists();renderHist();renderStats();
+}
+function resetEmpty(){
+  if(!confirm(L('confirm')))return;
+  origNames=[];candNames=[];winNames=[];hist=[];round=0;
+  document.getElementById('nameInput').value='';
+  setResult(L('msg_emptyReset'));updateStatus();renderLists();renderHist();renderStats();
+}
+function undoLast(){
+  if(!winNames.length){alert(L('msg_noUndo'));return;}
+  const last=winNames.pop();
+  if(!candNames.includes(last))candNames.push(last);
+  setResult(L('msg_undo')(last));updateStatus();renderLists();
+}
+
+/* ─── EXPORT ─── */
+async function exportWin(){
+  if(!winNames.length){alert(L('msg_noWin'));return;}
+  const txt=winNames.join('\n');
+  try{await navigator.clipboard.writeText(txt);alert(L('msg_copied'));}
+  catch(e){prompt(L('msg_copied'),txt);}
+}
+
+/* ─── STATUS ─── */
+function updateStatus(){
+  const D=LANG[curLang];
+  const sr=document.getElementById('statusRow');
+  sr.innerHTML=`
+    <div class="stat-pill">${D.sp_cand} <strong id="stC">${candNames.length}</strong></div>
+    <div class="stat-pill">${D.sp_win} <strong id="stW">${winNames.length}</strong></div>
+    <div class="stat-pill">${D.sp_total} <strong id="stT">${origNames.length}</strong></div>`;
+  document.getElementById('cntC').textContent=candNames.length;
+  document.getElementById('cntW').textContent=winNames.length;
+}
+
+/* ─── RENDER LISTS ─── */
+function renderLists(hl=[]){
+  const kw=document.getElementById('searchInput').value.trim().toLowerCase();
+  const cEl=document.getElementById('candList'),wEl=document.getElementById('winList');
+  const fc=candNames.filter(n=>n.toLowerCase().includes(kw));
+  const fw=winNames.filter(n=>n.toLowerCase().includes(kw));
+  cEl.innerHTML=fc.length?fc.map(n=>`
+    <div class="name-row cand${hl.includes(n)?' fresh':''}">
+      <span style="flex:1">${n}</span>
+      <div class="name-row-btns"><button class="btn-n red" onclick="rmCand('${esc(n)}')">${L('rm')}</button></div>
+    </div>`).join(''):`<div class="empty-state">—</div>`;
+  wEl.innerHTML=fw.length?fw.map(n=>`
+    <div class="name-row win-row${hl.includes(n)?' fresh':''}">
+      <span style="flex:1">✦ ${n}</span>
+      <div class="name-row-btns"><button class="btn-n gold" onclick="mvBack('${esc(n)}')">${L('mv')}</button></div>
+    </div>`).join(''):`<div class="empty-state">—</div>`;
+}
+function mvBack(n){winNames=winNames.filter(x=>x!==n);if(!candNames.includes(n))candNames.push(n);updateStatus();renderLists();}
+function rmCand(n){candNames=candNames.filter(x=>x!==n);updateStatus();renderLists();}
+
+/* ─── CONFETTI ─── */
+function spawnConfetti(){
+  const layer=document.getElementById('confettiLayer');layer.innerHTML='';
+  const cols=['#c9a84c','#e8cc80','#f0d080','#fff3b0','#a07828','#2ecc71','#5dade2'];
+  for(let i=0;i<80;i++){
+    const el=document.createElement('div');el.className='cp';
+    const sz=5+Math.random()*8;
+    el.style.cssText=`left:${5+Math.random()*90}%;top:0;width:${sz}px;height:${sz}px;background:${cols[Math.floor(Math.random()*cols.length)]};border-radius:${Math.random()>.5?'50%':'2px'};animation-delay:${Math.random()*.6}s;animation-duration:${1.4+Math.random()*.8}s;`;
+    layer.appendChild(el);
+  }
+  setTimeout(()=>{layer.innerHTML='';},2800);
+}
+
+/* ─── HISTORY ─── */
+function renderHist(){
+  const area=document.getElementById('histArea');
+  if(!hist.length){area.innerHTML=`<div class="empty-state" id="b2_empty">${L('b2_empty')}</div>`;return;}
+  area.innerHTML=`<div class="hist-scroll">${[...hist].reverse().map(h=>`
+    <div class="hist-entry">
+      <span class="hist-round">${L('rl')}${h.round}${h.isRedo?' ↩':''}</span>
+      <span class="hist-names">${h.winners.join(', ')}</span>
+    </div>`).join('')}</div>`;
+}
+function clearHist(){hist=[];round=0;renderHist();}
+async function exportHist(){
+  if(!hist.length)return;
+  const txt=hist.map(h=>`R${h.round}: ${h.winners.join(', ')}`).join('\n');
+  try{await navigator.clipboard.writeText(txt);alert(L('msg_copied'));}
+  catch(e){prompt('',txt);}
+}
+
+/* ─── STATS ─── */
+function renderStats(){
+  const chart=document.getElementById('statsChart');
+  if(!winNames.length){chart.innerHTML=`<div class="empty-state" id="b3_empty">${L('b3_empty')}</div>`;return;}
+  const show=winNames.slice(-10).reverse(),total=show.length;
+  chart.innerHTML=show.map((n,i)=>{
+    const pct=Math.max(15,Math.round(((total-i)/total)*100));
+    const rank=winNames.indexOf(n)+1;
+    return`<div class="chart-row"><div class="chart-name" title="${n}">${n}</div><div class="chart-track"><div class="chart-fill" style="width:${pct}%"></div></div><div class="chart-rank">#${rank}</div></div>`;
+  }).join('');
+}
+
+/* ─── AUTHOR ─── */
+function updateAuthor(){
+  const name=document.getElementById('aName').value.trim();
+  const dept=document.getElementById('aDept').value.trim();
+  const year=document.getElementById('aYear').value.trim();
+  let d='—';
+  if(name){d=dept||year?`${name} (${dept}${year})`:name;}
+  document.getElementById('authorDisp').textContent=d;
+  document.getElementById('footA').innerHTML=d!=='—'?`<strong>${d}</strong>`:'—';
+}
+
+/* ─── TIMER ─── */
+function fmtT(s){return`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
+function updTFace(){
+  const f=document.getElementById('timerFace');
+  f.textContent=fmtT(tLeft);
+  f.className='timer-face'+(tLeft<=10&&tRunning?' urgent':tPaused?' paused':'');
+}
+function onTRange(){
+  const v=parseInt(document.getElementById('tRange').value);
+  document.getElementById('tVal').textContent=v;
+  if(!tRunning&&!tPaused){tLeft=v;tSec=v;updTFace();}
+}
+function tStart(){
+  if(tRunning)return;
+  if(!tPaused){tSec=parseInt(document.getElementById('tRange').value);tLeft=tSec;}
+  tRunning=true;tPaused=false;updTFace();
+  tItv=setInterval(()=>{
+    tLeft--;updTFace();
+    if(tLeft<=0){clearInterval(tItv);tRunning=false;alert(L('msg_tEnd'));if(candNames.length>0)doDraw(false);}
+  },1000);
+}
+function tPause(){if(!tRunning)return;clearInterval(tItv);tRunning=false;tPaused=true;updTFace();}
+function tReset(){clearInterval(tItv);tRunning=false;tPaused=false;tLeft=parseInt(document.getElementById('tRange').value);updTFace();}
+
+/* ─── EVENTS ─── */
+document.getElementById('drawCountSel').addEventListener('change',function(){
+  document.getElementById('customCnt').style.display=this.value==='custom'?'block':'none';
+});
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  const l=document.body.classList.toggle('light');
+  document.getElementById('themeBtn').textContent=l?'🌑':'🌙';
+});
+document.getElementById('langSel').addEventListener('change',function(){applyLang(this.value);});
+document.getElementById('searchInput').addEventListener('input',()=>renderLists());
+
+/* ─── INIT ─── */
+applyLang('ko');updTFace();
+</script>
+</body>
+</html>
